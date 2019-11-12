@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorator="layouts/layout">
+<head>
+ 	<link th:href="@{/css/bootstrap.css}" href="/css/bootrap.css"
+          rel="stylesheet" type="text/css"/>
+    <script type="application/javascript" th:src="@{/js/jquery.js}"></script>
+    <script type="application/javascript" th:src="@{/js/bootstrap.js}"></script>
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.1.1/sockjs.min.js"></script>
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body style="background-color:#F5F5F5">
+	<th:block layout:fragment="content">
+		<div id="main-content" class="container">
+			<div class="row">
+				<div class="col-md-12">
+					<form class="form-inline">
+						<div class="form-group">
+							<label for="connect"><font color="#FF7F00">WebSocket connection:</font></label>
+							<button id="connect" class="btn btn-success" type="submit">Connect</button>
+							<button id="reset" class="btn btn-warning" type="submit">Reset Game</button>
+							<button id="disconnect" class="btn btn-danger" type="submit"
+								disabled="disabled">Disconnect</button>
+								
+						</div>
+					</form>
+				</div>
+				<br/><br/>
+				<div class="col-md-12">
+					<form class="form-inline">
+						<div class="form-group">
+							<input type="hidden" name="countRoundOfMatch" id="countRoundOfMatch" />
+							<input type="hidden" name="matchId" id="matchId" th:value="${matchId}" />
+							<label for="name"><font color="#FF0000">Code</font></label> 
+							<input type="text" name="user" id="user" value="phanxuanduc" /> 
+							<label for="name"><font color="#FF0000">X</font></label> 
+							<input type="text" id="locationX" class="form-control" /> 
+							<label for="name"><font color="#FF0000">Y</font></label> 
+							<input type="text" id="locationY" class="form-control" />
+						</div>
+						<button id="send" class="btn btn-info" type="submit">Send</button>
+					</form>
+				</div>
+			</div>
+			<br/>
+			<div class="row">
+				<div class="col-md-12">
+					<div id="result"></div>
+					<div id="conversation" class="table table-striped">
+						<h2><font color="#0000FF">Map:</font></h2>
+						<div id="greetings"></div>
+					</div>
+				</div>
+			</div>
+
+		</div>
+		
+	<script type="text/javascript">
+	// <![CDATA[
+		var stompClient = null;
+		var matchViewContent = $("#greetings");
+		var matchViewResult = $("#result");
+		
+		var  X_HAS_WON = "10";
+		var  O_HAS_WON = "01";
+		var  NO_WINER =  "00";
+		
+		var  END_ROUND  =  "end_round";
+		var  END_GAME  =  "end_game";
+		var  END =  "end";
+		var  FORWARD  =  "forward";
+		var  SURRENDER  =  "surrender";
+		var  NEXT_ROUND  =  "next_round";
+		var  RESET  =  "reset";
+		
+		function cleaMatchViewContent(){
+			matchViewContent.html("");
+		}
+		function clearMatchViewResult(){
+			matchViewResult.html("");
+		}
+		function appendMatchViewContent(text){
+			matchViewContent.append("<p>" + text + "</p>");
+		}
+		function appendMatchViewResult(text){
+			matchViewResult.append("<p>" + text + "</p>");
+		}
+		function setConnected(connected) {
+			$("#connect").prop("disabled", connected);
+			$("#disconnect").prop("disabled", !connected);
+			if (connected) {
+				$("#conversation").show();
+			} else {
+				$("#conversation").hide();
+			}
+			$("#greetings").html("");
+			$("#viewUsers").html("");
+		}
+
+		function connect(userCodeSend,matchId,callbback) {
+			var socket = new SockJS('/gs-guide-websocket');
+			stompClient = Stomp.over(socket);
+			
+			stompClient.connect({company: "1"}, function(frame) {
+				setConnected(true);
+				console.log('Connected: ' + frame);
+				sendActiveUsers(userCodeSend,"/app/active/"+matchId);
+				
+				stompClient.subscribe('/queue/active/'+matchId, function(active) {
+					
+					var activeObject = JSON.parse(active.body);
+					var totalUserInChanel = activeObject.totalUserInChanel;
+					var chanelMatch = activeObject.chanelMatch;
+					
+					var player1 = chanelMatch.split("\/")[1];
+					var player2 = chanelMatch.split("\/")[2];
+					var round = chanelMatch.split("\/")[0];
+					
+					callbback(chanelMatch);
+					
+					if(round != 1){
+						switch(totalUserInChanel){
+						case "0":
+							console.log('Hasnot Connected');
+							break ;
+						case "1" :
+							console.log('Connect: ok w888888888888888' + totalUserInChanel);
+							break;
+						case "2" :
+							console.log('Connect: ok goooooooooooooo' + totalUserInChanel);
+							stompClient.subscribe('/topic/matchGo/' + chanelMatch, function(messages) {
+								showGreeting(messages.body,userCodeSend,chanelMatch);
+							});
+							break;
+						default :
+							console.log('Connect: cant, full player' + totalUserInChanel);
+						}
+						
+					}else{
+						console.log('Connect: with bot ok goooooooooooooo' + totalUserInChanel);
+						stompClient.subscribe('/topic/matchGo/' + chanelMatch, function(messages) {
+							showGreeting(messages.body,userCodeSend,chanelMatch);
+						});
+					}
+					
+				});
+			});
+		}
+	
+		function disconnect() {
+			if (stompClient != null) {
+				stompClient.disconnect();
+			}
+			setConnected(false);
+			console.log("Disconnected");
+		}
+		function sendActiveUsers(userCodeSend,chanelActive) {
+			
+			stompClient.send(chanelActive, {},
+					JSON.stringify({
+						'userCode' : userCodeSend,
+						'chanelMatch' : "",
+						'totalUserInChanel' : 1
+					}));
+			
+			
+		}
+		function sendMessages(userCodeSend,matchID,x,y,gameFlag,roundOfMatch,chanelMatch) {
+			
+			stompClient.send("/app/match/" + chanelMatch, {},
+					JSON.stringify({
+						'userCode' : userCodeSend,
+						'matchID':matchID,
+						'X' : x,
+						'Y' : y,
+						'gameFlag': gameFlag,
+						'roundOfMatch' : roundOfMatch
+					}));
+			
+			
+		}
+		
+		function showGreeting(messages,userCodeSend,chanel) {
+			var userPong = JSON.parse(messages).userCode;
+			var gameFlag = JSON.parse(messages).gameFlag;
+			var roundOfMatch = JSON.parse(messages).roundOfMatch;
+			var matchID = JSON.parse(messages).matchID;
+			var locationX =JSON.parse(messages).X;
+			var locationY = JSON.parse(messages).Y;
+			
+			var player1 = chanel.split("\/")[1];
+			var player2 = chanel.split("\/")[2];
+			var round = chanel.split("\/")[0];
+			
+			var playerWin ="";
+			var json ="";
+			var txtResultRound ="";
+			
+			switch(gameFlag){
+			
+			case RESET:
+				cleaMatchViewContent();
+				break;
+			case  NEXT_ROUND :
+				$("#countRoundOfMatch").val(roundOfMatch);
+				if(round==1)
+					/** play with bot**/
+					sendMessages(userCodeSend,matchID,0,0,RESET,roundOfMatch,"bot/"+chanel);
+				
+				if(roundOfMatch==2){
+					setTimeout(function(){
+						if(round==1)
+							/** play with bot**/
+							sendMessages("bot",matchID,9,9,'bot_first',roundOfMatch,"bot/"+chanel);
+					}, 2000);
+				}
+				
+				if(roundOfMatch > 3){
+					/**end game**/
+					sendMessages(userCodeSend,matchID,0,0,END_GAME,roundOfMatch,chanel);
+				}
+				break;
+			case END :
+				
+				txtResultRound = "End Game : ----Result : " +userPong + " win";
+				
+				if(round==1) {
+					/** play with bot**/
+					sendMessages(userCodeSend,matchID,0,0,END_GAME,roundOfMatch,"bot/"+chanel);
+				}
+				setTimeout(function(){
+					disconnect();
+				}, 2000);
+				break;
+			case O_HAS_WON:
+				/** when first gone was lost **/
+				if(roundOfMatch == 2) 
+					if(round == 1) playerWin = player2; 
+						else playerWin = player1;
+				else  playerWin = player1
+				
+				txtResultRound  = "End Round : "+roundOfMatch+" ----Result : " +playerWin + " win";
+				
+				setTimeout(function(){
+					
+					cleaMatchViewContent();
+					
+					if(roundOfMatch < 3){
+						/**next round**/
+						sendMessages(playerWin,matchID,0,0,END_ROUND,roundOfMatch,chanel);
+					}
+				}, 2000);
+				
+				break;
+				
+			case X_HAS_WON:
+				/** when first gone was win **/
+				if(roundOfMatch == 2) 
+					if(round == 1) playerWin = player1; 
+					else playerWin = player2;
+				else  playerWin = player2
+				
+				txtResultRound  = "End Round : "+roundOfMatch+" ----Result : " +playerWin + " win";
+				
+				setTimeout(function(){
+					
+					cleaMatchViewContent(); 
+					
+					if(roundOfMatch < 3){
+						/**next round**/
+						sendMessages(playerWin,matchID,0,0,END_ROUND,roundOfMatch,chanel);
+					}
+				}, 2000);
+				break;
+			case SURRENDER:
+				break;
+			default:
+				json = JSON.stringify({
+					'userCode' : userPong,
+					'matchID':matchID,
+					'X' : locationX,
+					'Y' : locationY,
+					'gameFlag' :  gameFlag ,
+					'roundOfMatch' : roundOfMatch
+				});
+				break;
+			}
+			appendMatchViewContent(json);
+			appendMatchViewResult(txtResultRound);
+		}
+		
+		$(document).ready(function() {
+			
+			$("form").on('submit', function(e) {
+				e.preventDefault();
+			});
+			$("#connect").click(function() {
+				
+				/** paramater user with use **/
+				var userCodeSend = $("#user").val();
+				var matchId = $("#matchId").val();
+				
+				connect(userCodeSend,matchId,function(chanelMatch){
+					
+					var round = chanelMatch.split("\/")[0];
+					
+					$("#send").unbind().click( function(){
+						
+						var matchID = matchId;
+						var x = $("#locationX").val();
+						var y= $("#locationY").val();
+						var gameFlag = FORWARD;
+						var roundOfMatch = 1;
+						
+						if($("#countRoundOfMatch").val()!="") roundOfMatch = $("#countRoundOfMatch").val();
+						
+					 	sendMessages(userCodeSend,matchID,x,y,gameFlag,roundOfMatch,chanelMatch);
+						if(round==1){
+							/** with bot **/
+							sendMessages(userCodeSend,matchID,x,y,gameFlag,roundOfMatch,"bot/"+chanelMatch);
+						}
+					});
+					
+					/**just test**/
+					$("#reset").on("click",function() {
+						var userCodeSend = $("#user").val();
+						sendMessages("","",0,0,'reset',1,chanelMatch);
+						if(round==1)
+							sendMessages(userCodeSend,"",0,0,'reset',1,"bot/"+chanelMatch);
+						
+						$("#greetings").html("");
+					});
+					
+				});
+			});
+			$("#disconnect").click(function() {
+				disconnect();
+			});
+			
+		});
+		// ]]>
+	</script>
+	</th:block>
+</body>
+</html>

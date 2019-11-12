@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity3"
+      xmlns="http://www.w3.org/1999/xhtml">
+<head>
+
+</head>
+<body style="background-color:#F5F5F5">
+<div class="navbar navbar-inverse navbar-fixed-top" th:fragment="header">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#menu">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">CODE LOVERS</a>
+        </div>
+        <div class="navbar-collapse collapse" id="menu">
+            <ul class="nav navbar-nav nav-tabs">
+                <li class="action-header menu-header-home"><a href="#" th:href="@{/}">Home</a></li>
+                <li class="action-header menu-header-document"><a href="#" th:href="@{/document}">Documents</a></li>
+                <li class="action-header menu-header-match"><a href="#" th:href="@{/match/viewMatch}">Schedule Match</a></li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+                <li th:if="${#authorization.expression('!isAuthenticated()')}">
+                    <a th:href="@{/login}">Log in</a>
+                </li>
+                <li class="action-header menu-header-admin" th:if="${#authorization.expression('isAuthenticated()')}"
+                    sec:authorize="hasRole('ROLE_ADMIN')">
+                    <a class="btn btn-warning" href="#" th:href="@{/admin/users}">Admin</a>
+                </li>
+
+                <li class="dropdown" th:if="${#authorization.expression('isAuthenticated()')}">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
+                       aria-expanded="false">Setting <span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                        <li><a th:href="@{/}">Profile</a></li>
+                        <li role="separator" class="divider"></li>
+                        <li>
+                            <a th:href="@{/logout}">Logout</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+</body>
+</html>

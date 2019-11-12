@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorator="layouts/layout">
+
+<head>
+
+</head>
+<body style="background-color:#F5F5F5">
+	<!-- Insert content into the layouts/layout.html -->
+	<th:block layout:fragment="content">
+		<div>
+		<h2 align="center"><font color="red"><b>GAME CARO</b></font></h2>
+		<h3><font color="#007FFF">Định nghĩa giải đấu:</font></h3>
+		<p><font color="#800000">- Đây là giải đấu AI thông qua hình thức đấu cờ TicTacToe giữa các programmer. Các programmer, sau đây gọi là người chơi,</font></p>
+		<p><font color="#800000">	sẽ kết nối chương trình của mình với server để thông qua server gửi/nhận nước cờ tới từ đối thủ.</font></p>
+		<p><font color="#007FFF"><b>- Giải đấu sẽ có 2 vòng:</b></font></p>
+		<p>&nbsp;&nbsp;<font color="#FF0000"><b>+ Round 1 - Sơ loại:</b></font><font color="#FF7F00"> Người chơi sẽ cho chương trình của mình đấu với server.</font></p>
+		<p>&nbsp;&nbsp;<font color="#FF7F00">	Nếu thắng sẽ được vào vòng 2.</font></p>
+		<p>&nbsp;&nbsp;<font color="#FF0000"><b>+ Round 2 - Loại trực tiếp:</b></font> <font color="#FF7F00">Những người chơi lọt qua vòng 1 sẽ được phân cặp để đấu loại trực tiếp với nhau.</font></p>
+		<p>&nbsp;&nbsp;<font color="#FF7F00">	 Thể thức đấu loại được diễn ra cho đến khi tìm ra được nhà vô địch.</font></p>
+		<p><font color="#800000">Trong phiên bản 1, giải đấu sẽ tổ chức với 8 người chơi đăng ký sớm nhất.</font></p>
+		<h3><font color="blue">1) Đăng ký tham dự:</font></h3>
+		<p><font color="#800000">- Người tham dự đăng ký với Ban tổ chức (BTC) qua email/google form.</font></p>
+		<p><font color="#800000">- BTC nhập thông tin vào hệ thống để phát hành username và password cho người chơi.</font></p>
+		<h3><font color="#007FFF">2) Bắt đầu giải đấu:</font></h3>
+		<p><font color="#800000">- BTC kích hoạt giải đấu, hệ thống sẽ tự động sinh ra các lịch đấu giữa BOT và người chơi cho round 1: Sơ loại. </font></p>
+		<p><font color="#800000">- Danh sách trận đấu và kết quả có thể theo dõi từ trang quản trị và trang chủ của giải đấu.</font></p>
+		<p><font color="#800000">- Khi người chơi sẵn sàng Connect vào Server, BTC sẽ start từng Set của từng trận đấu.</font></p>
+		<p><font color="#800000">- Người chơi sử dụng API Ping để get trạng thái của mình trong giải đấu.</font></p>
+		<p><font color="#800000">- Dữ liệu trả về là chuỗi json bao gồm:</font></p>
+		<p>&nbsp;&nbsp;<font color="#FF0000"><b>+ code:</b></font><font color="#FF7F00"> Mỗi code tương ứng với mỗi trạng thái của người chơi.</font></p>
+		<p>&nbsp;&nbsp;<font color="#FF0000"><b>+ match:</b></font><font color="#FF7F00"> Chi tiết về trận đấu người chơi đang tham gia.</font></p>
+		<h3><font color="#007FFF">3) Thi đấu Round 1 (Sơ loại):</font></h3>
+		<label>&nbsp;&nbsp;<font color="#800000">Khi chơi với BOT, người chơi sẽ được ưu tiên đi trước.</font></label>
+		<p>&nbsp;&nbsp;<font color="#800000">Khi trận đấu được BTC start, người chơi có thể gửi API Go để đi nước cờ của mình.</font></p>
+		<p><font color="#800000">- Các tham số của API bao gồm:</font></p>
+		<p>&nbsp;&nbsp;<font color="#FF0000"><b>+ x, y:</b></font><font color="#FF7F00"> Tọa độ muốn đánh.</font></p>
+		<p>&nbsp;&nbsp;<font color="#FF0000"><b>+ surrender:</b></font><font color="#FF7F00"> có muốn đầu hàng hay không, 1 nếu đầu hàng, 0 nếu muốn đánh tiếp.</font></p>
+		<p>&nbsp;&nbsp;&nbsp;<font color="#800000">	Mặc định khi không gửi tham số này sẽ là 0.</font></p>
+		<p><font color="#800000">- Các trường hợp bị thua cuộc:</font></p>
+		<p>&nbsp;&nbsp;<font color="#800000">+ Gửi tham số = 1 lên Server.</font></p>
+		<p>&nbsp;&nbsp;<font color="#800000">+ Khi đối thủ đã có 5 nước thẳng hàng mà không bị chặn 2 đầu trước khi tạo ra 5 nước.</font></p>
+		<p>&nbsp;&nbsp;<font color="#800000">+ Khi quá 5 phút nhưng vẫn không đưa ra nước cờ tiếp theo.</font></p>
+		<p><font color="#800000">Khi trận đấu kết thúc, cập nhật kết quả vào bảng lịch trình.</font></p>
+		<p><font color="#800000">Toàn bộ diễn biến trận đấu có thể xem trên một trình duyệt. (Dành cho khán giả) :D</font></p>
+		<h3><font color="#007FFF">4) Sắp lịch Round 2 (Death-match or Knock-out):</font></h3>
+		<p><font color="#800000">- Sau khi toàn bộ các trận đấu của round1 đã xong, admin sẽ kích hoạt tính năng sắp lịch round2!</font></p>
+		<p><font color="#800000">- Các user mà thắng round1 sẽ được ghép ngẫu nhiên với nhau. Mỗi cặp sẽ có 1 match_id mới.</font></p>
+		<h3><font color="#007FFF">5) Thi đấu Round 2:</font></h3>
+		<p><font color="#800000">- Cách thức truyền tin thì tương tự như mục 3) về thi đấu sơ loại.</font></p>
+		</div>
+		<br/><br/><br/>
+	</th:block>
+</body>
+</html>

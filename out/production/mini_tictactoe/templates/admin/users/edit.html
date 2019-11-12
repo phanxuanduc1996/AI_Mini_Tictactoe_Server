@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorator="layouts/layoutWithoutHeader">
+
+<head>
+</head>
+<body>
+<th:block layout:fragment="content">
+    <h2>Edit User</h2>
+    <form th:action="@{'/admin/users/update/'+${id}}" th:object="${users}" method="post" class="form-horizontal">
+        <input type="hidden" name="id" id="id" th:value="${users.id}"/>
+        <div class="form-group">
+            <label class="control-label col-sm-2">Name</label>
+            <div class="col-sm-4">
+                <input type="text" name="username" id="username" th:value="${users.username}" class="form-control" disabled="disabled"/>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-sm-2">Password</label>
+            <div class="col-sm-4">
+                <button type="button" class="btn btn-warning" id="btnResetPassword">Reset Password</button>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-sm-2">Email</label>
+            <div class="col-sm-4">
+                <input type="email" name="email" id="email" th:value="${users.email}" class="form-control"/>
+            </div>
+        </div>
+        <div class="form-group" th:if="${#authorization.expression('isAuthenticated()')}">
+            <label class="control-label col-sm-2">Role</label>
+            <div class="col-sm-4">
+                <select id="role" name="role" class="form-control">
+                    <th:block th:if="${users.role} == 2">
+                        <option value="2" selected="selected">User</option>
+                        <option value="1">Admin</option>
+                    </th:block>
+                    <th:block th:if="${users.role} == 1">
+                        <option value="2">User</option>
+                        <option value="1" selected="selected">Admin</option>
+                    </th:block>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-sm-2"></label>
+            <div class="col-sm-4">
+                <button type="submit" class="btn btn-success">EDIT</button>
+                <button type="button" class="btn btn-danger" style="margin-left: 25px" id="btnDelete">DELETE</button>
+            </div>
+        </div>
+    </form>
+    <script style="text">
+            $(document).ready(function () {
+                var origin = (location.origin) ? location.origin : window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port : '');
+                $('form').submit(function () {
+                    $.ajax({
+                        url: $('form').attr("action"),
+                        type: "post",
+                        data: $('form').serialize()
+                    }).done(function () {
+                        alert("update successful");
+                        window.opener.reloadFunction(true);
+                        setTimeout(function() {
+                            //window.location.href= origin+"/admin/users";
+                        }, 1000)
+                    }).fail(function (data) {
+                        switch (data.status){
+                            case 404:
+                                alert("error input");
+                                break;
+                            default:
+                                alert("error");
+                        }
+                    });
+                    return false;
+                });
+                
+                $('#btnDelete').click(function () {
+                    if (confirm("Delete ? Are you sure?")){
+                        $.ajax({
+                            url: origin+"/admin/users/delete/"+$('#id').val(),
+                            type: "get",
+                            data: $('form').serialize()
+                        }).done(function () {
+                            alert("delete successful");
+                            window.opener.reloadFunction(true);
+                            setTimeout(function() {
+                                window.close();
+                            },1000)
+                        }).fail(function (data) {
+                            switch (data.status){
+                                case 404:
+
+                                    break;
+                                default:
+                                    alert("error");
+                            }
+                        });
+                    }
+                    return false;
+                });
+
+                $('#btnResetPassword').click(function () {
+                    if (confirm("Reset Password ? Are you sure?")){
+                        $.ajax({
+                            url: origin+"/admin/users/resetPassword/"+$('#id').val(),
+                            type: "get",
+                            data: $('form').serialize()
+                        }).done(function () {
+                            alert("reset password successful");
+                            window.opener.reloadFunction(true);
+                            setTimeout(function() {
+                               // window.close();
+                            },1000)
+                        }).fail(function (data) {
+                            switch (data.status){
+                                case 404:
+
+                                    break;
+                                default:
+                                    alert("error");
+                            }
+                        });
+                    }
+                    return false;
+                });
+            });
+
+    </script>
+</th:block>
+</body>
+</html>

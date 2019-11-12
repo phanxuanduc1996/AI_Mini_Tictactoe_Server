@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorator="layouts/layout">
+<head>
+	<link th:href="@{/css/bootstrap.css}" href="/css/bootrap.css"
+          rel="stylesheet" type="text/css"/>
+    <script type="application/javascript" th:src="@{/js/jquery.js}"></script>
+    <script type="application/javascript" th:src="@{/js/bootstrap.js}"></script>
+	<script
+		src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.1.1/sockjs.min.js"></script>
+	<script
+		src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body style="background-color:#F5F5F5">
+	<!-- Insert content into the layouts/layout.html -->
+	<th:block layout:fragment="content">
+		<h1 align="center"><font color="red"><b>View All Match</b></font></h1>
+		<th:block th:each="i: ${#numbers.sequence(0,aMatchs.size()-1)}">
+		<div class=" col-sm-4 pull-left">
+			<h2><b><button type="button" class="btn btn-default col-md-12" th:text ="'ROUND' + ${i+1}" style="border: 2px double #ddd; color:white; background-color:#F4A460; border-radius: 20px"></button></b></h2>
+			<div class="">
+				<table class="table grid-demo">
+					<tbody>
+						<th:block th:each="m:${aMatchs.get(i)}" th:action="@{/admin/match/}">
+							<tr>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+							</tr>
+							<tr>
+								<td><b><button type="button" class="btn btn-info col-md-12" th:text="${m.playerName1}" style="border: 1px double #ddd; color:#FFFFFF; border-radius: 10px"></button></b></td>
+								<td><b><button type="button" class="btn btn-warning col-md-10" style="border: 1px double #ddd; color:#FFFFFF; border-radius: 10px; background-color:#FFA500" th:text="${m.count1Win}"></button></b></td>
+							</tr>
+							<tr>
+								<td th:if="${m.roundNo}==0" class="form-inline">
+									<form th:action="@{/startRoundMatch/}" th:object="${users}" method="post" class="form-horizontal">
+										<div class="form-group">
+											<th:block>
+												<div class="col-sm-1">
+													<input type="hidden" name="matchId" id="matchId" th:value="${m.id}" />
+												</div>
+												<div class="col-md-12">
+													<button type="submit" class="btn btn-success col-md-9" id="btnStart" th:text="'Start (' + ${m.roundNo+1} + ' / 3)'" style="border: 1px double #ddd; color:#E0FFFF; border-radius: 10px; background-color:#DA70D6" th:if="${#authorization.expression('isAuthenticated()')}" sec:authorize="hasRole('ROLE_ADMIN')"></button>
+												</div>
+											</th:block>
+										</div>
+									</form>
+								</td>
+								<td th:if="${m.roundNo}==1" class="form-inline">
+									<form th:action="@{/startRoundMatch/}" th:object="${users}" method="post" class="form-horizontal">
+										<div class="form-group">
+											<th:block>
+												<div class="col-sm-1">
+													<input type="hidden" name="matchId" id="matchId" th:value="${m.id}" />
+												</div>
+												<div class="col-md-12">
+													<button type="submit" class="btn btn-success col-md-9" id="btnStart" th:text="'Start (' + ${m.roundNo+1} + ' / 3)'" style="border: 1px double #ddd; color:#E0FFFF; border-radius: 10px; background-color:#DA70D6" th:if="${#authorization.expression('isAuthenticated()')}" sec:authorize="hasRole('ROLE_ADMIN')"></button>
+												</div>
+											</th:block>
+										</div>
+									</form>
+								</td>
+								<td th:if="${m.roundNo}==2" class="form-inline">
+									<form th:action="@{/startRoundMatch/}" th:object="${users}" method="post" class="form-horizontal">
+										<div class="form-group">
+											<th:block>
+												<div class="col-sm-1">
+													<input type="hidden" name="matchId" id="matchId" th:value="${m.id}" />
+												</div>
+												<div class="col-md-12">
+													<button type="submit" class="btn btn-success col-md-9" id="btnStart" th:text="'Start (' + ${m.roundNo+1} + ' / 3)'" style="border: 1px double #ddd; color:#E0FFFF; border-radius: 10px; background-color:#DA70D6" th:if="${#authorization.expression('isAuthenticated()')}" sec:authorize="hasRole('ROLE_ADMIN')"></button>
+												</div>
+											</th:block>
+										</div>
+									</form>
+								</td>
+								<td class="form-inline" th:if="${m.roundNo}>=3">
+											<button type="button" class="btn btn-success col-md-8" th:text="'End Start'" style="border: 1px double #ddd; color:#E0FFFF; border-radius: 10px; background-color:#DA70D6" th:if="${#authorization.expression('isAuthenticated()')}" sec:authorize="hasRole('ROLE_ADMIN')"></button>
+								</td>
+								<td><a th:href="@{'/match/'+${m.id}}" class = "btn btn-link col-md-10" style="border: 1px double #ddd; color:#E0FFFF; border-radius: 10px; background-color:#BDB76B">vs</a></td>
+								<td><b><button type="button" class="btn btn-success col-md-12"  th:text="${m.playerWin == -1 ? '' : (m.playerWin == m.playerId1 ? m.playerName1 : m.playerName2)}" style="border: 1px double #ddd; color:#FFFFFF; background-color:#32CD32; border-radius: 10px"></button></b></td>
+							</tr>
+							<tr>
+								<td><b><button type="button" class="btn btn-info col-md-12" th:text="${m.playerName2}" style="border: 1px double #ddd; color:#FFFFFF; border-radius: 10px"></button></b></td>
+								<td><b><button type="button" class="btn btn-warning col-md-10" style="border: 1px double #ddd; color:#FFFFFF; border-radius: 10px; background-color:#FFA500" th:text="${m.count2Win}">countRoundPlayer2Win</button></b></td>
+							</tr>
+						</th:block>
+					</tbody>
+				</table>
+				<p></p>
+			</div>
+		</div>
+		</th:block>
+		
+		<script style="">
+	// <![CDATA[
+		
+		$(document).ready(function() {
+			var strWindowFeatures = "location=yes,height=600,width=800,scrollbars=yes,status=yes";
+			
+			var origin = (location.origin) ? location.origin
+					: window.location.protocol
+							+ "//"
+							+ window.location.hostname
+							+ (window.location.port ? ':'+ window.location.port : '');
+			$('form').click(function() {
+				var scope = $(this);
+				var matchId = $("#matchId").val();
+				var origin = (location.origin) ? location.origin : window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port : '');
+				console.log($('form').serialize());
+				$.ajax({
+					url : $('form').attr("action") + matchId,
+					type : "post",
+					data : scope.serialize()
+				}).done(function() {
+					alert("Add RoundofMatch successful");
+				}).fail(function(data) {
+					switch (data.status) {
+					default:
+						alert("Error");
+					}
+				});
+				return false;
+			});
+		});
+		
+		function reloadFunction(isLoad) {
+			if (isLoad) {
+				location.reload();
+			}
+		}
+		// ]]>
+	</script>
+	<style>
+		.table tr td {border-top :none;}
+	</style>
+	</th:block>
+</body>
+</html>

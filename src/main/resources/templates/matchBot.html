@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorator="layouts/layout">
+<head>
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.1.1/sockjs.min.js"></script>
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body style="background-color:#F5F5F5">
+	<th:block layout:fragment="content">
+		<div id="main-content" class="container">
+			<div class="row">
+				<div class="col-md-12">
+					<form class="form-inline">
+						<div class="form-group">
+							<label for="connect"><font color="#FF7F00">WebSocket connection:</font></label>
+							<button id="connect" class="btn btn-success" type="submit">Connect</button>
+							<button id="reset" class="btn btn-warning" type="submit">Reset Game</button>
+							<button id="disconnect" class="btn btn-danger" type="submit"
+								disabled="disabled">Disconnect</button>
+								
+						</div>
+					</form>
+				</div>
+				<br/><br/>
+				<div class="col-md-12">
+					<form class="form-inline">
+						<div class="form-group">
+							<input type="hidden" name="countRoundOfMatch" id="countRoundOfMatch" />
+							<label for="name"><font color="#FF0000">Code</font></label> 
+							<input type="text" name="user" id="user" value="phanxuanduc" /> 
+						</div>
+<!-- 						<button id="send" class="btn btn-default" type="submit">GoFIST</button> -->
+					</form>
+				</div>
+			</div>
+			<br />
+			<div class="row">
+				<div class="col-md-12">
+					<div id="result"></div>
+					<div id="conversation" class="table table-striped">
+						<h2><font color="#0000FF">Map:</font></h2>
+						<div id="greetings"></div>
+					</div>
+				</div>
+			</div>
+
+		</div>
+		
+	<script type="text/javascript">
+	// <![CDATA[
+		var stompClient = null;
+		
+		function setConnected(connected) {
+			$("#connect").prop("disabled", connected);
+			$("#disconnect").prop("disabled", !connected);
+			if (connected) {
+				$("#conversation").show();
+			} else {
+				$("#conversation").hide();
+			}
+			$("#greetings").html("");
+		}
+	
+		function connect(userCodeSend) {
+			var socket = new SockJS('/gs-guide-websocket');
+			stompClient = Stomp.over(socket);
+			stompClient.connect({company: "1"}, function(frame) {
+				setConnected(true);
+				console.log('Connected: ' + frame);
+				
+				sendActiveUsers(userCodeSend,"/app/active");
+				
+				stompClient.subscribe('/user/queue/active', function(active) {
+					var activeObject = JSON.parse(active.body);
+					var totalUserInChanel = activeObject.totalUserInChanel;
+					var chanelMatch = activeObject.chanelMatch;
+					
+					var player1 = chanelMatch.split("\/")[1];
+					var player2 = chanelMatch.split("\/")[2];
+					
+					if(player1 != "bot"){
+						switch(totalUserInChanel){
+						case "0":
+							console.log('Hasnot Connected');
+							break ;
+						case "1" :
+							console.log('Connect: ok w888888888888888' + totalUserInChanel);
+							break;
+						case "2" :
+							console.log('Connect: ok goooooooooooooo' + totalUserInChanel);
+							
+							var roundOfMatch = 1;
+							if($("#countRoundOfMatch").val()!="") roundOfMatch = $("#countRoundOfMatch").val();
+							if(userCodeSend==player1)
+								sendMessages(userCodeSend,"",2,2,'bot_first',roundOfMatch,userCodeSend+"/"+chanelMatch);
+							
+							
+							stompClient.subscribe('/topic/matchGo/' + chanelMatch, function(messages) {
+								showGreeting(messages.body,userCodeSend,chanelMatch);
+							});
+							break;
+						default :
+							console.log('Connect: cant, full player' + totalUserInChanel);
+							break;
+						}
+						
+					}
+
+					
+					
+					$("#send").on("click",function() {
+						var matchID = "";
+						var x = 2;
+						var y= 2;
+						var gameFlag = "forward"
+						var roundOfMatch = 1;
+						if($("#countRoundOfMatch").val()!="") roundOfMatch = $("#countRoundOfMatch").val();
+						
+						sendMessages(userCodeSend,matchID,x,y,gameFlag,roundOfMatch,chanelMatch);
+						
+						$("#send").prop('disabled',true);
+					});
+					$("#reset").on("click",function() {
+						sendMessages("","",0,0,'reset',1,chanelMatch);
+						$("#greetings").html("");
+					});
+				});
+			});
+		}
+	
+		function disconnect() {
+			if (stompClient != null) {
+				stompClient.disconnect();
+			}
+			setConnected(false);
+			console.log("Disconnected");
+		}
+		function resetText(){
+			$("#greetings").html("");
+		}
+		function sendActiveUsers(userCodeSend,chanelActive) {
+			
+			stompClient.send(chanelActive, {},
+					JSON.stringify({
+						'userCode' : userCodeSend,
+						'chanelMatch' : "",
+						'totalUserInChanel' : 1
+					}));
+			
+			
+		}
+		function sendMessages(userCodeSend,matchID,x,y,gameFlag,roundOfMatch,chanelMatch) {
+			
+			stompClient.send("/app/match/" + chanelMatch, {},
+					JSON.stringify({
+						'userCode' : userCodeSend,
+						'matchID':matchID,
+						'X' : x,
+						'Y' : y,
+						'gameFlag': gameFlag,
+						'roundOfMatch' : roundOfMatch
+					}));
+			
+			
+		}
+		function showGreeting(messages,userCodeSend,chanel) {
+			var userPong = JSON.parse(messages).userCode;
+			var gameFlag = JSON.parse(messages).gameFlag;
+			var roundOfMatch = JSON.parse(messages).roundOfMatch;
+			var matchID = JSON.parse(messages).matchID;
+			var locationX =JSON.parse(messages).X;
+			var locationY = JSON.parse(messages).Y;
+			//var round = chanel.split("\/")[0];
+			var player1 = chanel.split("\/")[1];
+			var player2 = chanel.split("\/")[2];
+				
+			var json ="";
+			
+			switch(gameFlag){
+			case "reset":
+				$("#greetings").html("");
+				break;
+			case "no_winer":
+				$("#greetings").html("");
+				$("#countRoundOfMatch").val(roundOfMatch);
+				
+				var intRount = Number(roundOfMatch)-1;
+				
+				var json2 = "End Round : "+intRount+" ----Result : No winer";
+				$("#result").append("<p>" + json2 + "</p>");
+				if(roundOfMatch==2){
+					setTimeout(function(){
+						$("#greetings").html("");
+						$("#send").prop('disabled',false);
+						  	sendMessages(userCodeSend,matchID,0,0,'next',roundOfMatch,chanel);
+					}, 2000);
+				}
+				
+				break;
+			case "next_round":
+				
+				$("#countRoundOfMatch").val(roundOfMatch);
+				
+				sendMessages(userCodeSend,matchID,0,0,'reset',roundOfMatch,userCodeSend+"/"+chanel);
+				if(roundOfMatch==2){
+					setTimeout(function(){
+						if(userCodeSend==player2)
+							sendMessages(userCodeSend,matchID,2,2,'bot_first',roundOfMatch,userCodeSend+"/"+chanel);
+					}, 2000);
+				}
+				if(roundOfMatch==3){
+					$("#send").prop('disabled',false);
+					setTimeout(function(){
+						if(userCodeSend==player1)
+							sendMessages(userCodeSend,matchID,2,2,'bot_first',roundOfMatch,userCodeSend+"/"+chanel);
+					}, 2000);
+				}
+					
+				break;
+			case "end":
+				var json2 = "End Game :"+userPong+" win";
+				$("#result").append("<p>" + json2 + "</p>");
+				sendMessages(userCodeSend,matchID,0,0,'reset',roundOfMatch,userCodeSend+"/"+chanel);
+				setTimeout(function(){
+					disconnect();
+				}, 2000);
+				break;
+			case "O has won":
+			case "X has won":
+				$("#greetings").html("");
+				
+					if(roundOfMatch >=3){
+						//end game
+						var json2 = "End Round : "+roundOfMatch+" ----Result : " +userPong + " win";
+						$("#result").append("<p>" + json2 + "</p>");
+						
+						if(userCodeSend  == userPong)
+							sendMessages(userCodeSend,matchID,0,0,'endGame',roundOfMatch,chanel);
+					}else{
+						//next round
+						var json2 = "End Round : "+roundOfMatch+" ----Result : " +userPong + " win";
+						$("#result").append("<p>" + json2 + "</p>");
+						if(userCodeSend  == userPong)
+							sendMessages(userCodeSend,matchID,0,0,'endRound',roundOfMatch,chanel);
+					}
+				break;
+			default:
+				json = JSON.stringify({
+					'userCode' : userPong,
+					'matchID':matchID,
+					'X' : locationX,
+					'Y' : locationY,
+					'gameFlag' :  gameFlag ,
+					'roundOfMatch' : roundOfMatch
+				});
+				if(userCodeSend!=userPong)
+					sendMessages(userPong,matchID,locationX,locationX,gameFlag,roundOfMatch,userCodeSend+"/"+chanel);
+			
+				break;
+			}
+			$("#greetings").append("<p>" + json + "</p>");
+		}
+		
+		$(document).ready(function() {
+			$("form").on('submit', function(e) {
+				e.preventDefault();
+			});
+			$("#connect").click(function() {
+				var userCodeSend = $("#user").val();
+				connect(userCodeSend);
+			});
+			$("#disconnect").click(function() {
+				disconnect();
+			});
+			
+		});
+		// ]]>
+	</script>
+	</th:block>
+</body>
+</html>

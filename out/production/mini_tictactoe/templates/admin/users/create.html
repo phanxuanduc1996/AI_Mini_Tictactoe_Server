@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorator="layouts/layoutWithoutHeader">
+
+<head>
+</head>
+<body>
+<th:block layout:fragment="content">
+    <h2>Create User</h2>
+    <form th:action="@{/admin/users/insert}" th:object="${users}" method="post" class="form-horizontal">
+        <div class="form-group">
+            <label class="control-label col-sm-2">Name</label>
+            <div class="col-sm-4">
+                <input type="text" name="username" id="username" class="form-control"/>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-sm-2">Password</label>
+            <div class="col-sm-4">
+                <input type="password" name="password" id="password" class="form-control"/>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-sm-2">Email</label>
+            <div class="col-sm-4">
+                <input type="email" name="email" id="email" class="form-control"/>
+            </div>
+        </div>
+        <div class="form-group" th:if="${#authorization.expression('isAuthenticated()')}">
+            <label class="control-label col-sm-2">Role</label>
+            <div class="col-sm-4">
+                <select id="role" name="role" class="form-control">
+                    <option value="2">User</option>
+                    <option value="1">Admin</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-sm-2"></label>
+            <div class="col-sm-4">
+                <button type="submit" class="btn btn-success">ADD</button>
+            </div>
+        </div>
+    </form>
+    <script style="text">
+        $(document).ready(function () {
+
+            $('form').submit(function () {
+                var origin = (location.origin) ? location.origin : window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port : '');
+                $.ajax({
+                    url: $('form').attr("action"),
+                    type: "post",
+                    data: $('form').serialize()
+                }).done(function () {
+                    alert("create successful");
+                    window.opener.reloadFunction(true);
+                    setTimeout(function() {
+                        window.close();
+                    }, 1000)
+                }).fail(function (data) {
+                    switch (data.status){
+                        case 403:
+                            alert("duplicate username");
+                            break;
+                        default:
+                            alert("error");
+                    }
+                });
+                return false;
+            });
+        });
+
+
+    </script>
+</th:block>
+</body>
+</html>

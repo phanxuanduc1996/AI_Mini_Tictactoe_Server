@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorator="layouts/layout">
+
+<head>
+    <title>List</title>
+
+</head>
+<body>
+<!-- Insert content into the layouts/layout.html -->
+<th:block layout:fragment="content">
+    <h2>List of Users</h2>
+    <div class="table-responsive">
+        <table class="table ">
+            <thead>
+                <th>No</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th></th>
+            </thead>
+            <tbody>
+
+            <tr th:each="u:${users}">
+                <td th:text="${u.id}"></td>
+                <td th:text="${u.username}"></td>
+                <td th:text="${u.email}"></td>
+                <td th:text="${u.role}==1 ? 'ADMIN' : 'USERS'"></td>
+                <td><a th:href="@{'/admin/users/edit/'+${u.id}}" class="btn btn-warning" id="btnDetails">Edit</a></td>
+            </tr>
+            </tbody>
+
+        </table>
+        <button data-url="/admin/users/create" class="btn btn-success" id="btnAdd" type="button">Add</button>
+    </div>
+    <script style="text">
+        $(document).ready(function () {
+            var strWindowFeatures = "location=yes,height=600,width=800,scrollbars=yes,status=yes";
+            $('#btnAdd').click(function () {
+                window.open($(this).attr("data-url"), "_blank", strWindowFeatures);
+                return false;
+            });
+            $('#btnDetails').click(function () {
+                window.open($(this).attr("href"), "_blank", strWindowFeatures);
+                return false;
+            });
+        });
+        function reloadFunction(isLoad){
+            if(isLoad){
+                location.reload();
+            }
+        }
+    </script>
+</th:block>
+
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorator="layouts/layoutWithoutHeader">
+
+<head>
+</head>
+<body style="background-color:#F5F5F5">
+<th:block layout:fragment="content">
+    <h2 align="center"><font color="red"><b>Create User</b></font></h2>
+    <form th:action="@{/admin/users/insert}" th:object="${users}" method="post" class="form-horizontal">
+        <div class="form-group">
+            <label class="control-label col-sm-4"><font color="#007FFF"><b>Name</b></font></label>
+            <div class="col-sm-4">
+                <input type="text" name="username" id="username" class="form-control" placeholder="Name"/>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-sm-4"><font color="#007FFF"><b>Password</b></font></label>
+            <div class="col-sm-4">
+                <input type="password" name="password" id="password" class="form-control" placeholder="Password"/>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-sm-4"><font color="#007FFF"><b>Email</b></font></label>
+            <div class="col-sm-4">
+                <input type="email" name="email" id="email" class="form-control" placeholder="Email"/>
+            </div>
+        </div>
+        <div class="form-group" th:if="${#authorization.expression('isAuthenticated()')}">
+            <label class="control-label col-sm-4"><font color="#007FFF"><b>Role</b></font></label>
+            <div class="col-sm-4">
+                <select id="role" name="role" class="form-control">
+                    <option value="2">User</option>
+                    <option value="1">Admin</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-sm-4"></label>
+            <div class="col-sm-4">
+                <button type="submit" class="btn btn-success">ADD</button>
+            </div>
+        </div>
+    </form>
+    <script style="text">
+        $(document).ready(function () {
+
+            $('form').submit(function () {
+                var origin = (location.origin) ? location.origin : window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port : '');
+                $.ajax({
+                    url: $('form').attr("action"),
+                    type: "post",
+                    data: $('form').serialize()
+                }).done(function () {
+                    alert("Create Successful");
+                   	window.opener.reloadFunction(true);
+                    setTimeout(function() {
+                        window.close();
+                    }, 1000)
+                }).fail(function (data) {
+                    switch (data.status){
+                        case 403:
+                            alert("Duplicate Username");
+                            break;
+                        default:
+                            alert("Error");
+                    }
+                });
+                return false;
+            });
+        });
+
+
+    </script>
+</th:block>
+</body>
+</html>

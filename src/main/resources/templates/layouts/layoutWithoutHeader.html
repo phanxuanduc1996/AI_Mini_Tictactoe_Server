@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <link th:href="@{/css/bootstrap.css}" href="/css/bootrap.css"
+          rel="stylesheet" type="text/css"/>
+    <script type="application/javascript" th:src="@{/js/jquery.js}"></script>
+    <script type="application/javascript" th:src="@{/js/bootstrap.js}"></script>
+</head>
+<body style="background-color:#F5F5F5">
+<!-- Header -->
+<header>
+
+</header>
+<div class="container" style="margin-top: 100px;">
+    <div layout:fragment="content"></div>
+</div>
+<footer>
+    <div th:replace="fragments/footer :: footer">&copy; 2016 codelovers.vn</div>
+</footer>
+</body>
+</html>
